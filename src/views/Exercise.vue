@@ -4,8 +4,7 @@
       @keyup.right="nextCard"
       @keyup.left="previousCard"
       @keyup.space="showMenu = !showMenu"
-    >
-    </global-events>
+    ></global-events>
     <transition-group
       class="cards"
       name="cards"
@@ -25,15 +24,11 @@
     </transition-group>
     <transition name="slide" mode="out-in">
       <nav v-if="!settingsOpen && showMenu">
-        <img class="icon" src="@/assets/create-icon.svg" alt="create" />
-        <img
-          class="icon"
-          @click="settingsOpen = true"
-          src="@/assets/layout-icon.svg"
-          alt="layout"
-        />
-        <img class="icon" src="@/assets/reset-icon.svg" alt="reset" />
-        <img class="icon" src="@/assets/info-icon.svg" alt="info" />
+        <img class="icon" @click="$router.push('sets')" src="@/assets/create-icon.svg" alt="create" />
+        <img class="icon" @click="settingsOpen = true" src="@/assets/layout-icon.svg" alt="layout" />
+        <img class="icon" @click="shuffle" src="@/assets/reset-icon.svg" alt="reset" />
+        <img class="icon" :class="{inactive: !useAudio}" src="@/assets/audio-icon.svg" alt="info" />
+        <img class="icon" @click="$router.push('info')" src="@/assets/info-icon.svg" alt="info" />
       </nav>
       <nav v-else-if="showMenu" class="layout-menu">
         <div class="top-slot">
@@ -67,13 +62,16 @@ import SetGenerator from "@/modules/SetGenerator";
 import VueSlider from "vue-slider-component";
 import "vue-slider-component/theme/antd.css";
 import GlobalEvents from "vue-global-events";
+import AudioTrigger from "@/modules/AudioTrigger";
+import { animateEl } from "@/modules/anim";
+import { parseCamelCase } from "@/modules/parsers";
 export default {
   components: {
     Card,
     VueSlider,
     GlobalEvents
   },
-  mixins: [SetGenerator],
+  mixins: [SetGenerator, AudioTrigger],
   data() {
     return {
       cards: [],
@@ -82,6 +80,12 @@ export default {
       showMenu: true,
       contentWidth: window.innerWidth,
       contentHeight: window.innerHeight,
+      useAudio: false,
+      setInfo: {
+        name: "alphabetical",
+        staticLetters: true,
+        staticActions: false
+      },
       settings: {
         cardSize: 200,
         cardMargin: 30,
@@ -122,6 +126,13 @@ export default {
       };
     }
   },
+  watch: {
+    $route(to, from) {
+      console.log("hi");
+      console.log(this.$route);
+      console.log(this.$route.params);
+    }
+  },
   methods: {
     nextCard() {
       console.log("next");
@@ -134,22 +145,63 @@ export default {
       //Necessary to select el because we are referring to a vue transition instance
       this.contentWidth = this.$refs.cards.$el.clientWidth;
       this.contentHeight = this.$refs.cards.$el.clientHeight;
+    },
+    async turnOnAudio() {
+      let res = await navigator.mediaDevices.getUserMedia({
+        audio: true,
+        video: false
+      });
+      debugger;
+      // this.listen()
+    },
+    turnOffAudio() {
+      console.log("off");
+    },
+    shuffle(e) {
+      let mix = arr => {
+        for (let i = 0; i < arr.length; i++) {
+          let el = Math.round(Math.random() * (arr.length - 1));
+          let dest = Math.round(Math.random() * (arr.length - 1));
+          let temp = arr[dest];
+          arr[dest] = arr[el];
+          arr[el] = temp;
+        }
+        return arr;
+      };
+
+      let [letters, actions] = this.cards.reduce(
+        (group, card) => {
+          group[0].push(card.letter);
+          group[1].push(card.action);
+          return group;
+        },
+        [[], []]
+      );
+      if (!this.setInfo.staticLetters) letters = mix(letters);
+      if (!this.setInfo.staticActions) actions = mix(actions);
+
+      let vals = [letters, actions];
+      let cards = [];
+      for (let i = 0; i < letters.length; i++) {
+        cards.push({ letter: letters[i], action: actions[i] });
+      }
+      this.cards = cards;
+
+      animateEl(e.target, "spin");
     }
   },
   filters: {
-    parseCamelCase(str) {
-      let friendlyStr = str[0].toUpperCase();
-      for (let i = 1; i < str.length; i++) {
-        if (str.charCodeAt(i) < 91) friendlyStr += " ";
-        friendlyStr += str[i];
-      }
-      return friendlyStr;
-    }
+    parseCamelCase
   },
   created() {
-    this.cards = this.generate("alphabetical");
+    this.cards = this.generateAlphabeticalSet();
   },
   mounted() {
+    if (this.$route.params.metadata) {
+      console.log(this.$route.params);
+      this.cards = this.$route.params.set;
+      this.setInfo = this.$route.params.metadata;
+    }
     window.addEventListener("resize", this.onResize);
   },
   beforeDestroy() {
@@ -216,6 +268,10 @@ export default {
     .icon {
       margin: 0 10px;
       cursor: pointer;
+
+      &.spin {
+        animation: spin 0.7s;
+      }
     }
   }
 
@@ -280,6 +336,12 @@ export default {
   &-enter-active,
   &-leave-active {
     transition: all 0.7s;
+  }
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
   }
 }
 </style>

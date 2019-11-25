@@ -1,6 +1,8 @@
 <template>
   <div id="app">
-    <router-view />
+    <transition name="fade" mode="out-in">
+      <router-view />
+    </transition>
   </div>
 </template>
 
@@ -21,6 +23,18 @@
   --grid-gap: 15px;
   text-align: center;
   color: var(--dark);
+
+  .fade {
+    &-enter-active,
+    &-leave-active {
+      transition: opacity 0.7s;
+    }
+
+    &-enter,
+    &-leave-to {
+      opacity: 0;
+    }
+  }
 }
 
 #nav {
@@ -43,7 +57,28 @@
 
 button {
   background: var(--card-color);
+  border: none;
+  border-radius: 7px;
+  cursor: pointer;
   padding: 15px;
   font-family: inherit;
+}
+
+h1 {
+  font-weight: 300;
+  font-size: 60px;
+  margin: 20px auto;
+}
+
+ul {
+  list-style: none;
+  padding: 0;
+
+  li {
+    padding: 0;
+    font-size: 20px;
+    margin: 13px 0;
+    cursor: pointer;
+  }
 }
 </style>
