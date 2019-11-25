@@ -1,20 +1,26 @@
 <template>
   <div id="app">
-    <div id="nav">
-      <router-link to="/">Home</router-link> |
-      <router-link to="/about">About</router-link>
-    </div>
-    <router-view/>
+    <router-view />
   </div>
 </template>
 
 <style lang="scss">
+* {
+  margin: 0;
+  box-sizing: border-box;
+}
 #app {
-  font-family: 'Avenir', Helvetica, Arial, sans-serif;
+  font-family: "Montserrat", Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  --dark: #325c6f;
+  --card-color: #f0f0f0;
+  --card-font-size: 24px;
+  --card-columns: 5;
+
+  --grid-gap: 15px;
   text-align: center;
-  color: #2c3e50;
+  color: var(--dark);
 }
 
 #nav {
@@ -27,6 +33,12 @@
     &.router-link-exact-active {
       color: #42b983;
     }
+  }
+
+  .page {
+    width: 100%;
+    height: 100vh;
+    background: whitesmoke;
   }
 }
 </style>

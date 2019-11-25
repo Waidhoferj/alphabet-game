@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="50px" height="50px" viewBox="0 0 50 50" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <!-- Generator: Sketch 60.1 (88133) - https://sketch.com -->
+    <title>reset-icon</title>
+    <desc>Created with Sketch.</desc>
+    <g id="reset-icon" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <g id="_ionicons_svg_md-refresh" transform="translate(6.000000, 5.000000)" fill="#325C6F" fill-rule="nonzero">
+            <path d="M19.5,34.125 C11.4565824,34.125 4.875,27.543196 4.875,19.5 C4.875,11.4561392 11.4565824,4.875 19.5,4.875 C23.521875,4.875 27.1780142,6.58125 29.7381648,9.2626108 L21.9375,17.0625 L39,17.0625 L39,0 L33.2720966,5.72834659 C29.7381648,2.19352841 24.8631648,0 19.5,0 C8.77533239,0 0,8.77533239 0,19.5 C0,30.2246676 8.65246023,39 19.5,39 C28.4794176,39 35.9295256,33.0021989 38.2688608,24.8181818 L33.1112216,24.8181818 C31.0343608,30.3093153 25.6726364,34.125 19.5,34.125 Z" id="Path"></path>
+        </g>
+    </g>
+</svg>

@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="50px" height="50px" viewBox="0 0 50 50" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <!-- Generator: Sketch 60.1 (88133) - https://sketch.com -->
+    <title>layout-icon</title>
+    <desc>Created with Sketch.</desc>
+    <g id="layout-icon" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <g id="Group-2" transform="translate(4.000000, 6.000000)">
+            <rect id="Rectangle" fill="#325C6F" x="0" y="0.740740741" width="38" height="37" rx="8"></rect>
+            <polyline id="Path-7" stroke="#325C6F" points="40 37.7407407 43 37.7407407 43 0.740740741 40 0.740740741"></polyline>
+        </g>
+    </g>
+</svg>
