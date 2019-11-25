@@ -34,11 +34,16 @@
       color: #42b983;
     }
   }
+}
 
-  .page {
-    width: 100%;
-    height: 100vh;
-    background: whitesmoke;
-  }
+.page {
+  width: 100%;
+  height: 100vh;
+}
+
+button {
+  background: var(--card-color);
+  padding: 15px;
+  font-family: inherit;
 }
 </style>

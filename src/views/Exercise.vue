@@ -1,41 +1,62 @@
 <template>
   <div class="page exercise-page" @keyup.space="cardIndex++">
-    <global-events @keyup.right.space="nextCard" @keyup.left="previousCard">
+    <global-events
+      @keyup.right="nextCard"
+      @keyup.left="previousCard"
+      @keyup.space="showMenu = !showMenu"
+    >
     </global-events>
-    <div class="content">
+    <transition-group
+      class="cards"
+      name="cards"
+      :class="{ centered: cardSlots < 9 }"
+      @click="nextCard"
+      tag="div"
+      ref="cards"
+    >
       <Card
         v-for="(card, i) in shownCards"
         :title="card.letter"
         :subtitle="card.action"
         :key="card.letter"
         :class="{ selected: selectedIndex == i }"
+        :style="cardStyles"
       ></Card>
-    </div>
-    <transition name="slide">
-      <nav v-if="!settingsOpen">
+    </transition-group>
+    <transition name="slide" mode="out-in">
+      <nav v-if="!settingsOpen && showMenu">
         <img class="icon" src="@/assets/create-icon.svg" alt="create" />
-        <img class="icon" src="@/assets/layout-icon.svg" alt="layout" />
+        <img
+          class="icon"
+          @click="settingsOpen = true"
+          src="@/assets/layout-icon.svg"
+          alt="layout"
+        />
         <img class="icon" src="@/assets/reset-icon.svg" alt="reset" />
         <img class="icon" src="@/assets/info-icon.svg" alt="info" />
       </nav>
-      <div v-else class="layout-menu">
-        <hr class="divider" />
-        <div class="option">
-          <vue-slider v-model="settings.cardSize"></vue-slider>
-          <p>card size</p>
+      <nav v-else-if="showMenu" class="layout-menu">
+        <div class="top-slot">
+          <hr class="divider" />
+          <img
+            class="close-icon"
+            @click="settingsOpen = false"
+            src="@/assets/close.svg"
+            alt="close"
+          />
         </div>
-        <div class="option">
-          <div class="grid-dimensions">
-            <input type="text" />
-            <p>x</p>
-            <input type="text" />
+        <div class="options">
+          <div v-for="(val, setting) in settings" :key="setting" class="option">
+            <vue-slider
+              v-model="settings[setting]"
+              :min="boundaries[setting][0]"
+              :max="boundaries[setting][1]"
+              width="100px"
+            ></vue-slider>
+            <p>{{ setting | parseCamelCase }}</p>
           </div>
         </div>
-        <div class="option">
-          <vue-slider v-model="settings.fontSize"></vue-slider>
-          <p>card size</p>
-        </div>
-      </div>
+      </nav>
     </transition>
   </div>
 </template>
@@ -58,29 +79,48 @@ export default {
       cards: [],
       cardIndex: 0,
       settingsOpen: false,
+      showMenu: true,
+      contentWidth: window.innerWidth,
+      contentHeight: window.innerHeight,
       settings: {
-        gridCols: 3,
-        gridRows: 3,
         cardSize: 200,
-        fontSize: 30
+        cardMargin: 30,
+        fontSize: 55
+      },
+      boundaries: {
+        cardSize: [30, 580],
+        cardMargin: [0, 100],
+        fontSize: [25, 100]
       }
     };
   },
   computed: {
+    cardSlots() {
+      let { cardSize, cardMargin } = this.settings;
+      let h = Math.floor(this.contentWidth / (cardSize * 0.8 + cardMargin * 2));
+      let v = Math.floor(this.contentHeight / (cardSize + cardMargin * 2));
+      return h * v;
+    },
     shownCards() {
-      let numCardsDisplayed = this.settings.gridCols * this.settings.gridRows;
-      let currentSet = Math.floor(this.cardIndex / numCardsDisplayed);
-      let start = currentSet * numCardsDisplayed;
+      let currentSet = Math.floor(this.cardIndex / this.cardSlots);
+      let start = currentSet * this.cardSlots;
       return this.cards.slice(
         start,
-        Math.min(start + numCardsDisplayed, this.cards.length)
+        Math.min(start + this.cardSlots, this.cards.length)
       );
     },
     selectedIndex() {
-      return this.cardIndex % this.shownCards.length;
+      return this.cardIndex % this.cardSlots;
     },
-
-    numberOfCards() {}
+    cardStyles() {
+      let { cardSize, cardMargin, fontSize } = this.settings;
+      return {
+        width: cardSize * 0.8 + "px",
+        height: cardSize + "px",
+        fontSize: fontSize * 0.01 * cardSize + "%",
+        margin: cardMargin + "px"
+      };
+    }
   },
   methods: {
     nextCard() {
@@ -90,12 +130,30 @@ export default {
     previousCard() {
       if (this.cardIndex > 0) this.cardIndex--;
     },
-    updatePageSize() {
-      console.log("page resized");
+    onResize() {
+      //Necessary to select el because we are referring to a vue transition instance
+      this.contentWidth = this.$refs.cards.$el.clientWidth;
+      this.contentHeight = this.$refs.cards.$el.clientHeight;
+    }
+  },
+  filters: {
+    parseCamelCase(str) {
+      let friendlyStr = str[0].toUpperCase();
+      for (let i = 1; i < str.length; i++) {
+        if (str.charCodeAt(i) < 91) friendlyStr += " ";
+        friendlyStr += str[i];
+      }
+      return friendlyStr;
     }
   },
   created() {
-    this.cards = this.generateAlphabeticalSet();
+    this.cards = this.generate("alphabetical");
+  },
+  mounted() {
+    window.addEventListener("resize", this.onResize);
+  },
+  beforeDestroy() {
+    window.removeEventListener("resize", this.onResize);
   }
 };
 </script>
@@ -108,17 +166,36 @@ export default {
   align-items: center;
   padding: 20px;
   height: 100vh;
-  .content {
-    padding: 30px;
-    display: grid;
 
-    grid-template-columns: repeat(var(--card-columns), 1fr);
-    grid-gap: var(--grid-gap);
-    width: min(100vh, 100vw);
-    height: min-content;
+  .cards {
+    flex-wrap: wrap;
+    display: flex;
+    width: 100%;
+    height: calc(100vh - 50px);
+
+    &.centered {
+      justify-content: center;
+      align-items: center;
+    }
+
+    &-enter,
+    &-leave-to {
+      opacity: 0;
+      transform: scale(0.8);
+    }
+    &-enter-active,
+    &-leave-active {
+      transition: opacity 0.7s, transform 0.7s;
+    }
+
+    &-leave-active {
+      z-index: 0;
+      position: absolute;
+    }
   }
 
   nav {
+    z-index: 2;
     position: fixed;
     bottom: 0;
     left: 0;
@@ -143,29 +220,51 @@ export default {
   }
 
   .layout-menu {
+    display: flex;
+    flex-direction: column;
     position: absolute;
     bottom: 0;
     left: 0;
-    display: flex;
+    background: white;
+
     width: 100%;
 
-    .option {
-      width: 33%;
-      height: 100%;
-      display: flex;
-      justify-content: center;
-      align-items: center;
+    .top-slot {
+      width: 100%;
+      margin-bottom: 20px;
 
-      .grid-dimensions {
-        input {
-          display: inline-block;
-          border: none;
-          background: transparent;
-          font-family: inherit;
-        }
-        p {
-          display: inline-block;
-          margin: 0 10px;
+      .divider {
+        width: 80%;
+        border: 1px solid var(--card-color);
+      }
+
+      .close-icon {
+        cursor: pointer;
+        width: 30px;
+      }
+    }
+    .options {
+      display: flex;
+
+      .option {
+        width: 33%;
+        height: 100%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        flex-direction: column;
+
+        .grid-dimensions {
+          input {
+            display: inline-block;
+            border: none;
+            background: transparent;
+            font-family: inherit;
+          }
+          p {
+            display: inline-block;
+            margin: 0 10px;
+          }
         }
       }
     }

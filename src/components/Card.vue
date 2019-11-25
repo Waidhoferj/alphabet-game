@@ -13,13 +13,15 @@ export default {
 
 <style lang="scss">
 .card {
-  padding: 15px;
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
   text-align: center;
-  width: 100%;
-  height: 100%;
   background: var(--card-color);
   border-radius: 15px;
-  transition: all 0.7s;
+  transition: transform 0.7s, box-shadow 0.7s;
   will-change: transition;
 
   &.selected {
@@ -28,10 +30,11 @@ export default {
   }
 
   .title {
-    font-size: calc(var(--card-font-size) * 1.3);
+    font-size: 2em;
   }
   .subtitle {
-    font-size: var(--card-font-size);
+    font-size: 1.3em;
+    font-weight: 300;
   }
 }
 </style>
