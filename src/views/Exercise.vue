@@ -27,7 +27,14 @@
         <img class="icon" @click="$router.push('sets')" src="@/assets/create-icon.svg" alt="create" />
         <img class="icon" @click="settingsOpen = true" src="@/assets/layout-icon.svg" alt="layout" />
         <img class="icon" @click="shuffle" src="@/assets/reset-icon.svg" alt="reset" />
-        <img class="icon" :class="{inactive: !useAudio}" src="@/assets/audio-icon.svg" alt="info" />
+        <img
+          class="icon"
+          :class="{inactive: !useAudio}"
+          @click="useAudio ? turnOffAudio() : turnOnAudio()"
+          src="@/assets/audio-icon.svg"
+          alt="info"
+        />
+        <audio ref="audio"></audio>
         <img class="icon" @click="$router.push('info')" src="@/assets/info-icon.svg" alt="info" />
       </nav>
       <nav v-else-if="showMenu" class="layout-menu">
@@ -62,16 +69,16 @@ import SetGenerator from "@/modules/SetGenerator";
 import VueSlider from "vue-slider-component";
 import "vue-slider-component/theme/antd.css";
 import GlobalEvents from "vue-global-events";
-import AudioTrigger from "@/modules/AudioTrigger";
 import { animateEl } from "@/modules/anim";
 import { parseCamelCase } from "@/modules/parsers";
+import { VolumeSensor } from "@/modules/VolumeSensor";
 export default {
   components: {
     Card,
     VueSlider,
     GlobalEvents
   },
-  mixins: [SetGenerator, AudioTrigger],
+  mixins: [SetGenerator],
   data() {
     return {
       cards: [],
@@ -83,7 +90,7 @@ export default {
       useAudio: false,
       setInfo: {
         name: "alphabetical",
-        staticLetters: true,
+        staticLetters: false,
         staticActions: false
       },
       settings: {
@@ -147,14 +154,27 @@ export default {
       this.contentHeight = this.$refs.cards.$el.clientHeight;
     },
     async turnOnAudio() {
-      let res = await navigator.mediaDevices.getUserMedia({
-        audio: true,
-        video: false
-      });
-      debugger;
+      this.useAudio = true;
+      let stream;
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({
+          audio: true,
+          video: false
+        });
+      } catch (err) {
+        console.log("Could not use microphone becase", err);
+        this.useAudio = false;
+        return;
+      }
+      console.log(stream);
+      this.volumeSensor = new VolumeSensor(stream, this.$refs.audio);
+      this.volumeSensor.onThresholdHit(() => this.nextCard());
+      this.volumeSensor.listen();
+
       // this.listen()
     },
     turnOffAudio() {
+      this.useAudio = false;
       console.log("off");
     },
     shuffle(e) {
@@ -268,9 +288,14 @@ export default {
     .icon {
       margin: 0 10px;
       cursor: pointer;
+      transition: opacity 0.7s;
 
       &.spin {
         animation: spin 0.7s;
+      }
+
+      &.inactive {
+        opacity: 0.5;
       }
     }
   }
