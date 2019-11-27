@@ -20,7 +20,6 @@ export class VolumeSensor {
     this.analyser.getByteTimeDomainData(this.dataArray);
     let padding = 0;
     this.threshold = this.rms(this.dataArray) + padding;
-    console.log("Threshold", this.threshold, "analyser:", this.analyser);
     this.raf = setInterval(() => {
       this.analyser.getByteTimeDomainData(this.dataArray);
       let soundLevel = this.rms(this.dataArray);
@@ -42,7 +41,6 @@ export class VolumeSensor {
   stop() {
     clearInterval(this.raf);
     clearTimeout(this.debounceTimer);
-    console.log("off");
   }
   onThresholdHit(func) {
     this.thresholdCallbacks.push(func);
@@ -50,14 +48,4 @@ export class VolumeSensor {
   clearCallbacks() {
     this.thresholdCallbacks = [];
   }
-}
-
-function debounce(func, delay) {
-  var debounceTimer;
-  console.log("ran");
-  return () => {
-    console.log("inised");
-    clearTimeout(debounceTimer);
-    debounceTimer = setTimeout(func, delay);
-  };
 }

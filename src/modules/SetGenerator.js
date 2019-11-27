@@ -34,7 +34,6 @@ export default {
     },
     generateRandomSet() {
       let alphabet = [...this.alphabet];
-      console.log(alphabet);
       let rSet = [];
       for (let j = 0; j < 26; j++) {
         let i = Math.round(Math.random() * (alphabet.length - 1));

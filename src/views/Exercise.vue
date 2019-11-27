@@ -133,16 +133,8 @@ export default {
       };
     }
   },
-  watch: {
-    $route(to, from) {
-      console.log("hi");
-      console.log(this.$route);
-      console.log(this.$route.params);
-    }
-  },
   methods: {
     nextCard() {
-      console.log("next");
       if (this.cardIndex < this.cards.length - 1) this.cardIndex++;
     },
     previousCard() {
@@ -155,7 +147,6 @@ export default {
     },
     async initAudio() {
       let stream;
-      console.log("audio init");
       try {
         stream = await navigator.mediaDevices.getUserMedia({
           audio: true,
@@ -221,7 +212,6 @@ export default {
   },
   mounted() {
     if (this.$route.params.metadata) {
-      console.log(this.$route.params);
       this.cards = this.$route.params.set;
       this.setInfo = this.$route.params.metadata;
     }
