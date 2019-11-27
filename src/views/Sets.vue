@@ -3,8 +3,8 @@
     <h1>Sets</h1>
     <ul class="sets">
       <li
-        v-for="(funcName,set) in sets"
-        @click="generateSet(funcName)"
+        v-for="(details,set) in sets"
+        @click="generateSet(set,details)"
         :key="set"
       >{{set | parseCamelCase}}</li>
     </ul>
@@ -20,19 +20,31 @@ export default {
   data() {
     return {
       sets: {
-        alphabetical: "generateAlphabeticalSet",
-        reverseAlphabetical: "generateReverseAlphabeticalSet",
-        randomOrder: "generateRandomSet"
+        alphabetical: {
+          func: "generateAlphabeticalSet",
+          staticLetters: true,
+          staticActions: false
+        },
+        reverseAlphabetical: {
+          func: "generateReverseAlphabeticalSet",
+          staticLetters: true,
+          staticActions: false
+        },
+        randomOrder: {
+          func: "generateRandomSet",
+          staticLetters: false,
+          staticActions: false
+        }
       }
     };
   },
   methods: {
-    generateSet(funcName, setName) {
-      let set = this[funcName]();
+    generateSet(setName, details) {
+      let set = this[details.func]();
       let metadata = {
-        name: setName,
-        staticLetters: true,
-        staticActions: false
+        setName,
+        staticLetters: details.staticLetters,
+        staticActions: details.staticActions
       };
       this.$router.push({ name: "exercise", params: { metadata, set } });
     }

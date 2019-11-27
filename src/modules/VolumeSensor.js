@@ -4,9 +4,9 @@ export class VolumeSensor {
     let context = new (window.AudioContext || window.webkitAudioContext)();
     this.analyser = context.createAnalyser();
     let source = context.createMediaStreamSource(stream);
-    this.conroller = context.createMediaElementSource(controller);
+    this.controller = context.createMediaElementSource(controller);
     source.connect(this.analyser);
-    // this.analyser.connect(this.conroller);
+    // source.connect(this.controller);
 
     this.analyser.fftSize = 4096;
     let bufferLength = this.analyser.frequencyBinCount;
@@ -20,7 +20,7 @@ export class VolumeSensor {
     this.analyser.getByteTimeDomainData(this.dataArray);
     let padding = 0;
     this.threshold = this.rms(this.dataArray) + padding;
-    console.log(this.threshold);
+    console.log("Threshold", this.threshold, "analyser:", this.analyser);
     this.raf = setInterval(() => {
       this.analyser.getByteTimeDomainData(this.dataArray);
       let soundLevel = this.rms(this.dataArray);
@@ -41,8 +41,7 @@ export class VolumeSensor {
   }
   stop() {
     clearInterval(this.raf);
-    this.raf = -1;
-    this.mediaRecorder.stop();
+    clearTimeout(this.debounceTimer);
     console.log("off");
   }
   onThresholdHit(func) {

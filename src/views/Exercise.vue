@@ -1,5 +1,5 @@
 <template>
-  <div class="page exercise-page" @keyup.space="cardIndex++">
+  <div class="page exercise-page">
     <global-events
       @keyup.right="nextCard"
       @keyup.left="previousCard"
@@ -69,7 +69,7 @@ import SetGenerator from "@/modules/SetGenerator";
 import VueSlider from "vue-slider-component";
 import "vue-slider-component/theme/antd.css";
 import GlobalEvents from "vue-global-events";
-import { animateEl } from "@/modules/anim";
+import { animateEl, delay } from "@/modules/anim";
 import { parseCamelCase } from "@/modules/parsers";
 import { VolumeSensor } from "@/modules/VolumeSensor";
 export default {
@@ -90,7 +90,7 @@ export default {
       useAudio: false,
       setInfo: {
         name: "alphabetical",
-        staticLetters: false,
+        staticLetters: true,
         staticActions: false
       },
       settings: {
@@ -153,9 +153,9 @@ export default {
       this.contentWidth = this.$refs.cards.$el.clientWidth;
       this.contentHeight = this.$refs.cards.$el.clientHeight;
     },
-    async turnOnAudio() {
-      this.useAudio = true;
+    async initAudio() {
       let stream;
+      console.log("audio init");
       try {
         stream = await navigator.mediaDevices.getUserMedia({
           audio: true,
@@ -166,16 +166,18 @@ export default {
         this.useAudio = false;
         return;
       }
-      console.log(stream);
       this.volumeSensor = new VolumeSensor(stream, this.$refs.audio);
       this.volumeSensor.onThresholdHit(() => this.nextCard());
+    },
+    async turnOnAudio() {
+      await delay(500);
+      if (!this.volumeSensor) await this.initAudio();
+      this.useAudio = true;
       this.volumeSensor.listen();
-
-      // this.listen()
     },
     turnOffAudio() {
       this.useAudio = false;
-      console.log("off");
+      this.volumeSensor.stop();
     },
     shuffle(e) {
       let mix = arr => {
@@ -208,6 +210,7 @@ export default {
       this.cards = cards;
 
       animateEl(e.target, "spin");
+      this.cardIndex = 0;
     }
   },
   filters: {
