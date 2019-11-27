@@ -17,7 +17,8 @@ module.exports = {
           type: "image/png",
           sizes: "512x512"
         }
-      ]
+      ],
+      background_color: "#FFF"
     }
   }
 };
