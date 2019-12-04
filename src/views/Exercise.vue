@@ -148,14 +148,15 @@ export default {
   },
   methods: {
     nextCard() {
-      this.scrollToCard(this.cardIndex + 1);
+      this.cardIndex < this.cards.length - 1 ? this.cardIndex++ : 0;
     },
     previousCard() {
-      this.scrollToCard(this.cardIndex - 1);
+      this.cardIndex > 0 ? this.cardIndex-- : 0;
     },
     scrollToCard(index) {
       let len = this.cards.length - 1;
-      let position = (index / len) * document.body.scrollHeight;
+      let position =
+        (index / len) * (document.body.scrollHeight - window.innerHeight);
       window.scroll(0, position);
     },
     onResize() {
@@ -232,6 +233,10 @@ export default {
             this.cards.length - 1
           )
         );
+        if (Math.abs(this.cardIndex - i) > 2) {
+          return this.scrollToCard(this.cardIndex);
+        }
+
         if (this.cardIndex != i) this.cardIndex = i;
       });
     }
@@ -280,8 +285,9 @@ export default {
     .cards {
       flex-wrap: wrap;
       display: flex;
-      width: 100%;
+      width: 95%;
       height: calc(100vh - 50px);
+      margin: 0 auto;
 
       &.centered {
         justify-content: center;
