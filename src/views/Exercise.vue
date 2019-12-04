@@ -1,65 +1,78 @@
 <template>
   <div class="page exercise-page">
-    <global-events
-      @keyup.right="nextCard"
-      @keyup.left="previousCard"
-      @keyup.space="showMenu = !showMenu"
-    ></global-events>
-    <transition-group
-      class="cards"
-      name="cards"
-      :class="{ centered: cardSlots < 9 }"
-      @click="nextCard"
-      tag="div"
-      ref="cards"
-    >
-      <Card
-        v-for="(card, i) in shownCards"
-        :title="card.letter"
-        :subtitle="card.action"
-        :key="card.letter"
-        :class="{ selected: selectedIndex == i }"
-        :style="cardStyles"
-      ></Card>
-    </transition-group>
-    <transition name="slide" mode="out-in">
-      <nav v-if="!settingsOpen && showMenu">
-        <img class="icon" @click="$router.push('sets')" src="@/assets/create-icon.svg" alt="create" />
-        <img class="icon" @click="settingsOpen = true" src="@/assets/layout-icon.svg" alt="layout" />
-        <img class="icon" @click="shuffle" src="@/assets/reset-icon.svg" alt="reset" />
-        <img
-          class="icon"
-          :class="{inactive: !useAudio}"
-          @click="useAudio ? turnOffAudio() : turnOnAudio()"
-          src="@/assets/audio-icon.svg"
-          alt="info"
-        />
-        <audio ref="audio"></audio>
-        <img class="icon" @click="$router.push('info')" src="@/assets/info-icon.svg" alt="info" />
-      </nav>
-      <nav v-else-if="showMenu" class="layout-menu">
-        <div class="top-slot">
-          <hr class="divider" />
+    <div class="scroller"></div>
+    <div class="content">
+      <global-events
+        @keyup.right="nextCard"
+        @keyup.left="previousCard"
+        @keyup.space="showMenu = !showMenu"
+      ></global-events>
+      <transition-group
+        class="cards"
+        name="cards"
+        :class="{ centered: cardSlots < 9 }"
+        @click="nextCard"
+        tag="div"
+        ref="cards"
+      >
+        <Card
+          v-for="(card, i) in shownCards"
+          :title="card.letter"
+          :subtitle="card.action"
+          :key="card.letter"
+          :class="{ selected: selectedIndex == i }"
+          :style="cardStyles"
+        ></Card>
+      </transition-group>
+      <transition name="slide" mode="out-in">
+        <nav v-if="!settingsOpen && showMenu">
           <img
-            class="close-icon"
-            @click="settingsOpen = false"
-            src="@/assets/close.svg"
-            alt="close"
+            class="icon"
+            @click="$router.push('sets')"
+            src="@/assets/create-icon.svg"
+            alt="create"
           />
-        </div>
-        <div class="options">
-          <div v-for="(val, setting) in settings" :key="setting" class="option">
-            <vue-slider
-              v-model="settings[setting]"
-              :min="boundaries[setting][0]"
-              :max="boundaries[setting][1]"
-              width="100px"
-            ></vue-slider>
-            <p>{{ setting | parseCamelCase }}</p>
+          <img
+            class="icon"
+            @click="settingsOpen = true"
+            src="@/assets/layout-icon.svg"
+            alt="layout"
+          />
+          <img class="icon" @click="shuffle" src="@/assets/reset-icon.svg" alt="reset" />
+          <img
+            class="icon"
+            :class="{inactive: !useAudio}"
+            @click="useAudio ? turnOffAudio() : turnOnAudio()"
+            src="@/assets/audio-icon.svg"
+            alt="info"
+          />
+          <audio ref="audio"></audio>
+          <img class="icon" @click="$router.push('info')" src="@/assets/info-icon.svg" alt="info" />
+        </nav>
+        <nav v-else-if="showMenu" class="layout-menu">
+          <div class="top-slot">
+            <hr class="divider" />
+            <img
+              class="close-icon"
+              @click="settingsOpen = false"
+              src="@/assets/close.svg"
+              alt="close"
+            />
           </div>
-        </div>
-      </nav>
-    </transition>
+          <div class="options">
+            <div v-for="(val, setting) in settings" :key="setting" class="option">
+              <vue-slider
+                v-model="settings[setting]"
+                :min="boundaries[setting][0]"
+                :max="boundaries[setting][1]"
+                width="100px"
+              ></vue-slider>
+              <p>{{ setting | parseCamelCase }}</p>
+            </div>
+          </div>
+        </nav>
+      </transition>
+    </div>
   </div>
 </template>
 
@@ -135,10 +148,15 @@ export default {
   },
   methods: {
     nextCard() {
-      if (this.cardIndex < this.cards.length - 1) this.cardIndex++;
+      this.scrollToCard(this.cardIndex + 1);
     },
     previousCard() {
-      if (this.cardIndex > 0) this.cardIndex--;
+      this.scrollToCard(this.cardIndex - 1);
+    },
+    scrollToCard(index) {
+      let len = this.cards.length - 1;
+      let position = (index / len) * document.body.scrollHeight;
+      window.scroll(0, position);
     },
     onResize() {
       //Necessary to select el because we are referring to a vue transition instance
@@ -202,6 +220,20 @@ export default {
 
       animateEl(e.target, "spin");
       this.cardIndex = 0;
+    },
+    onScroll() {
+      //steps through the card array
+      requestAnimationFrame(() => {
+        let i = Math.floor(
+          Math.min(
+            (window.scrollY /
+              (document.body.scrollHeight - window.innerHeight)) *
+              (this.cards.length - 1),
+            this.cards.length - 1
+          )
+        );
+        if (this.cardIndex != i) this.cardIndex = i;
+      });
     }
   },
   filters: {
@@ -216,128 +248,142 @@ export default {
       this.setInfo = this.$route.params.metadata;
     }
     window.addEventListener("resize", this.onResize);
+    window.addEventListener("scroll", this.onScroll);
   },
   beforeDestroy() {
     window.removeEventListener("resize", this.onResize);
+    window.removeEventListener("scroll", this.onScroll);
   }
 };
 </script>
 
 <style lang="scss">
 .exercise-page {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
   padding: 20px;
   height: 100vh;
 
-  .cards {
-    flex-wrap: wrap;
-    display: flex;
-    width: 100%;
-    height: calc(100vh - 50px);
-
-    &.centered {
-      justify-content: center;
-      align-items: center;
-    }
-
-    &-enter,
-    &-leave-to {
-      opacity: 0;
-      transform: scale(0.8);
-    }
-    &-enter-active,
-    &-leave-active {
-      transition: opacity 0.7s, transform 0.7s;
-    }
-
-    &-leave-active {
-      z-index: 0;
-      position: absolute;
-    }
+  .scroller {
+    height: 500vh;
   }
 
-  nav {
-    z-index: 2;
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    width: 100%;
-    padding: 15px 0;
-    display: flex;
-    justify-content: center;
-
-    .divider {
-      position: absolute;
-      top: 0;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 80%;
-      border: 1px solid rgb(233, 233, 233);
-    }
-
-    .icon {
-      margin: 0 10px;
-      cursor: pointer;
-      transition: opacity 0.7s;
-
-      &.spin {
-        animation: spin 0.7s;
-      }
-
-      &.inactive {
-        opacity: 0.5;
-      }
-    }
-  }
-
-  .layout-menu {
+  .content {
     display: flex;
     flex-direction: column;
-    position: absolute;
-    bottom: 0;
+    justify-content: center;
+    align-items: center;
+    position: fixed;
+    top: 0;
     left: 0;
-    background: white;
-
     width: 100%;
+    height: 100vh;
 
-    .top-slot {
-      width: 100%;
-      margin-bottom: 20px;
-
-      .divider {
-        width: 80%;
-        border: 1px solid var(--card-color);
-      }
-
-      .close-icon {
-        cursor: pointer;
-        width: 30px;
-      }
-    }
-    .options {
+    .cards {
+      flex-wrap: wrap;
       display: flex;
+      width: 100%;
+      height: calc(100vh - 50px);
 
-      .option {
-        width: 33%;
-        height: 100%;
-        display: flex;
+      &.centered {
         justify-content: center;
         align-items: center;
-        flex-direction: column;
+      }
 
-        .grid-dimensions {
-          input {
-            display: inline-block;
-            border: none;
-            background: transparent;
-            font-family: inherit;
-          }
-          p {
-            display: inline-block;
-            margin: 0 10px;
+      &-enter,
+      &-leave-to {
+        opacity: 0;
+        transform: scale(0.8);
+      }
+      &-enter-active,
+      &-leave-active {
+        transition: opacity 0.7s, transform 0.7s;
+      }
+
+      &-leave-active {
+        z-index: 0;
+        position: absolute;
+      }
+    }
+
+    nav {
+      z-index: 2;
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      padding: 15px 0;
+      display: flex;
+      justify-content: center;
+
+      .divider {
+        position: absolute;
+        top: 0;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 80%;
+        border: 1px solid rgb(233, 233, 233);
+      }
+
+      .icon {
+        margin: 0 10px;
+        cursor: pointer;
+        transition: opacity 0.7s;
+
+        &.spin {
+          animation: spin 0.7s;
+        }
+
+        &.inactive {
+          opacity: 0.5;
+        }
+      }
+    }
+
+    .layout-menu {
+      display: flex;
+      flex-direction: column;
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      background: white;
+
+      width: 100%;
+
+      .top-slot {
+        width: 100%;
+        margin-bottom: 20px;
+
+        .divider {
+          width: 80%;
+          border: 1px solid var(--card-color);
+        }
+
+        .close-icon {
+          cursor: pointer;
+          width: 30px;
+        }
+      }
+      .options {
+        display: flex;
+
+        .option {
+          width: 33%;
+          height: 100%;
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          flex-direction: column;
+
+          .grid-dimensions {
+            input {
+              display: inline-block;
+              border: none;
+              background: transparent;
+              font-family: inherit;
+            }
+            p {
+              display: inline-block;
+              margin: 0 10px;
+            }
           }
         }
       }
